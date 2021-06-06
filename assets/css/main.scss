@@ -172,7 +172,7 @@ img {
 .aboutme {
     @include breakpoint(medium) {
         max-width: 30rem;
-        margin-top: 5.5rem;
+        margin-top: 1.0rem;
 
         img {
             float: none;
@@ -212,6 +212,7 @@ img {
     text-align: center;
     font-size: 1.3rem;
     margin-top: 7rem;
+    color: var(--post_text);
 }
 
 
@@ -242,12 +243,12 @@ img {
     }
 
     @include breakpoint(medium) {
-        max-width: 49rem;
-        margin-top: 2rem;
+        max-width: 33rem;
+        margin-top: 1rem;
     }
 
     @include mobile-only {
-        margin-top: 2rem;
+        margin-top: 1rem;
         margin-left: 1.2rem;
         margin-right: 1.2rem;
     }
@@ -264,13 +265,14 @@ img {
 .archive_title {
     word-wrap: normal;
     @include breakpoint(medium) {
-        max-width: 80%;
+        max-width: 70%;
     }
 }
 
 .archive_type {
     font-size: 2rem;
     font-weight: bold;
+    margin-top: 1rem;
     margin-bottom: 1rem;
 }
 
