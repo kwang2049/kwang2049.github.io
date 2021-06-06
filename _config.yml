@@ -36,6 +36,12 @@ defaults:
       layout: post
       comment: true   
 
+categories-order:
+  - open-source
+  - publications
+  - blogs
+  - life>>research
+
 markdown_ext: "markdown,mkdown,mkdn,mkd,md"
 markdown: kramdown 
 

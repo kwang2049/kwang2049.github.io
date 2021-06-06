@@ -14,11 +14,12 @@
 </div>
 
 <div class="archive">
-  {% for category in site.categories %}
-    <p class="header_level2"> {{ category[0] }} </p>
+  {% for cat in site.categories-order %}
+    {% assign cat_capitalized = cat | capitalize %}
+    <p class="header_level2"> {{ cat_capitalized }} </p>
 
     {% for post in site.posts %}
-      {% if post.categories[0] == category[0] %}
+      {% if post.categories[0] == cat_capitalized %}
         <ul>
           <li>
             <!-- <time class='archive_date' datetime='{{ post.date | date_to_xmlschema }}'>

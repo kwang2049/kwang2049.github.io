@@ -20,14 +20,18 @@
         </li>
       </ul>
       {% endif %}
-      {% for category in site.categories %}
-        {% capture cat_name %}{{ category | first | downcase }}{% endcapture %}
-        <ul class="nav_list">
-          <li class="nav_item">
-            <a href="{{ site.baseurl }}/categories/{{ cat_name }}" id="aa">{{ cat_name | capitalize }}
-              ({{ category | last | size }})</a>
-          </li>
-        </ul>
+      {% for cat in site.categories-order %}
+        {% for category in site.categories %}
+          {% capture cat_name %}{{ category | first | downcase }}{% endcapture %}
+          {% if cat ==  cat_name %}
+          <ul class="nav_list">
+            <li class="nav_item">
+              <a href="{{ site.baseurl }}/categories/{{ cat_name }}" id="aa">{{ cat_name | capitalize }}
+                ({{ category | last | size }}) </a>
+            </li>
+          {% endif %}
+          </ul>
+        {% endfor %}  
       {% endfor %}
     </nav>
   </div>
