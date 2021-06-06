@@ -1,0 +1,46 @@
+
+title: Kexin Wang #Your awesome title
+email: #youremail@domain.com
+description: > # this means to ignore newlines until "baseurl"
+  Personal page of Kexin Wang.
+
+baseurl: # the subpath of the site
+url: https://kwang2049.github.io/ # the base hostname & protocol for your site
+
+permalink: /:year-:month/:title
+timezone:
+
+favicon: /assets/img/favicon.ico
+
+google_analytics: #UA—XXXXXXXX-X
+disqus_shortname: #disqus shortname
+
+user:
+  name: Kexin Wang
+  cv: /assets/img/CV.pdf
+  pic: /assets/img/avatar-768x768.png
+  picAlt: "catbook"
+  job: A PhD student at UKP, TU Darmstadt
+  aboutme: true # comment this out if you don't need the 'about' page.
+
+exclude:
+  - README.md
+  - LICENSE
+  - github
+
+defaults:
+  - scope:
+      path: "_posts"
+      type: posts
+    values:
+      layout: post
+      comment: true   
+
+markdown_ext: "markdown,mkdown,mkdn,mkd,md"
+markdown: kramdown 
+
+# Filtering Content
+show_drafts: null
+limit_posts: 0
+future:      false
+unpublished: false

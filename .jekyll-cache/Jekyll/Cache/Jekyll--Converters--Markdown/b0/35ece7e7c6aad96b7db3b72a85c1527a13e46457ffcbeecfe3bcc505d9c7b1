@@ -1,0 +1,108 @@
+I"º%<p>This folder shows an example, how can we train an unsupervised <a href="https://arxiv.org/abs/2104.06979">TSDAE (Tranformer-based Denoising AutoEncoder)</a> model with pure sentences as training data.</p>
+
+<h2 id="background">Background</h2>
+<p>During training, TSDAE encodes damaged sentences into fixed-sized vectors and requires the decoder to recon-struct  the  original  sentences  from  this  sentenceembeddings. For good reconstruction quality, thesemantics must be captured well in the sentenceembeddings from the encoder. Later, at inference,we only use the encoder for creating sentence embeddings. The architecture is illustrated in the figure below:</p>
+
+<p><img src="https://raw.githubusercontent.com/UKPLab/sentence-transformers/master/docs/img/TSDAE.png" alt="" /></p>
+
+<h2 id="unsupervised-training-with-tsdae">Unsupervised Training with TSDAE</h2>
+<p>Training with TSDAE is simple. You just need a set of sentences:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span><span class="p">,</span> <span class="n">LoggingHandler</span>
+<span class="kn">from</span> <span class="nn">sentence_transformers</span> <span class="kn">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">util</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">losses</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+<span class="c1"># Define your sentence transformer model using CLS pooling
+</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">'bert-base-uncased'</span>
+<span class="n">word_embedding_model</span> <span class="o">=</span> <span class="n">models</span><span class="p">.</span><span class="n">Transformer</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+<span class="n">pooling_model</span> <span class="o">=</span> <span class="n">models</span><span class="p">.</span><span class="n">Pooling</span><span class="p">(</span><span class="n">word_embedding_model</span><span class="p">.</span><span class="n">get_word_embedding_dimension</span><span class="p">(),</span> <span class="s">'cls'</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">SentenceTransformer</span><span class="p">(</span><span class="n">modules</span><span class="o">=</span><span class="p">[</span><span class="n">word_embedding_model</span><span class="p">,</span> <span class="n">pooling_model</span><span class="p">])</span>
+
+<span class="c1"># Define a list with sentences (1k - 100k sentences)
+</span><span class="n">train_sentences</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Your set of sentences"</span><span class="p">,</span>
+                   <span class="s">"Model will automatically add the noise"</span><span class="p">,</span> 
+                   <span class="s">"And re-construct it"</span><span class="p">,</span>
+                   <span class="s">"You should provide at least 1k sentences"</span><span class="p">]</span>
+
+<span class="c1"># Create the special denoising dataset that adds noise on-the-fly
+</span><span class="n">train_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">.</span><span class="n">DenoisingAutoEncoderDataset</span><span class="p">(</span><span class="n">train_sentences</span><span class="p">)</span>
+
+<span class="c1"># DataLoader to batch your data
+</span><span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Use the denoising auto-encoder loss
+</span><span class="n">train_loss</span> <span class="o">=</span> <span class="n">losses</span><span class="p">.</span><span class="n">DenoisingAutoEncoderLoss</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">decoder_name_or_path</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">tie_encoder_decoder</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Call the fit method
+</span><span class="n">model</span><span class="p">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">train_objectives</span><span class="o">=</span><span class="p">[(</span><span class="n">train_dataloader</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">)],</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">weight_decay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="o">=</span><span class="s">'constantlr'</span><span class="p">,</span>
+    <span class="n">optimizer_params</span><span class="o">=</span><span class="p">{</span><span class="s">'lr'</span><span class="p">:</span> <span class="mf">3e-5</span><span class="p">},</span>
+    <span class="n">show_progress_bar</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="n">model</span><span class="p">.</span><span class="n">save</span><span class="p">(</span><span class="s">'output/tsdae-model'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="tsdae-from-sentences-file">TSDAE from Sentences File</h2>
+
+<p><strong><a href="train_tsdae_from_file.py">train_tsdae_from_file.py</a></strong> loads sentences from a provided text file. It is expected, that the there is one sentence per line in that text file.</p>
+
+<p>TSDAE will be training using these sentences. Checkpoints are stored every 500 steps to the output folder.</p>
+
+<h2 id="tsdae-on-askubuntu-dataset">TSDAE on AskUbuntu Dataset</h2>
+<p>The <a href="https://github.com/taolei87/askubuntu">AskUbuntu dataset</a> is a manually annotated dataset for the <a href="https://askubuntu.com/">AskUbuntu forum</a>. For 400 questions, experts annotated for each question 20 other questions if they are related or not. The questions are split into train &amp; development set.</p>
+
+<p><strong><a href="train_askubuntu_tsdae.py">train_askubuntu_tsdae.py</a></strong> - Shows an example how to train a model on AskUbuntu using only sentences without any labels. As sentences, we use the titles that are not used in the dev / test set.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th style="text-align: center">MAP-Score on test set</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TSDAE (bert-base-uncased)</td>
+      <td style="text-align: center">59.4</td>
+    </tr>
+    <tr>
+      <td><strong>pretrained SentenceTransformer models</strong></td>
+      <td style="text-align: center">Â </td>
+    </tr>
+    <tr>
+      <td>nli-bert-base</td>
+      <td style="text-align: center">50.7</td>
+    </tr>
+    <tr>
+      <td>paraphrase-distilroberta-base-v1</td>
+      <td style="text-align: center">54.8</td>
+    </tr>
+    <tr>
+      <td>stsb-roberta-large</td>
+      <td style="text-align: center">54.6</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="tsdae-as-pre-training-task">TSDAE as Pre-Training Task</h2>
+<p>As we show in our <a href="https://arxiv.org/abs/2104.06979">TSDAE paper</a>, TSDAE also a powerful pre-training method outperforming the classical Mask Language Model (MLM) pre-training task.</p>
+
+<p>You first train your model with the TSDAE loss. After you have trained for a certain number of steps / after the model converges, you can further fine-tune your pre-trained model like any other SentenceTransformer model.</p>
+
+<h2 id="citation">Citation</h2>
+<p>If you use the code for augmented sbert, feel free to cite our publication <a href="https://arxiv.org/abs/2104.06979">TSDAE: Using Transformer-based Sequential Denoising Auto-Encoderfor Unsupervised Sentence Embedding Learning</a>:</p>
+<div class="language-bibtex highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">@article</span><span class="p">{</span><span class="nl">wang-2021-TSDAE</span><span class="p">,</span>
+    <span class="na">title</span> <span class="p">=</span> <span class="s">"TSDAE: Using Transformer-based Sequential Denoising Auto-Encoderfor Unsupervised Sentence Embedding Learning"</span><span class="p">,</span>
+    <span class="na">author</span> <span class="p">=</span> <span class="s">"Wang, Kexin and Reimers, Nils and  Gurevych, Iryna"</span><span class="p">,</span> 
+    <span class="na">journal</span><span class="p">=</span> <span class="s">"arXiv preprint arXiv:2104.06979"</span><span class="p">,</span>
+    <span class="na">month</span> <span class="p">=</span> <span class="s">"4"</span><span class="p">,</span>
+    <span class="na">year</span> <span class="p">=</span> <span class="s">"2021"</span><span class="p">,</span>
+    <span class="na">url</span> <span class="p">=</span> <span class="s">"https://arxiv.org/abs/2104.06979"</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div></div>
+:ET

@@ -1,0 +1,109 @@
+I"�%<p>This repository hosts the data and the evaluation script for reproducing the results reported in the paper: “<a href="https://arxiv.org/abs/2104.06979">TSDAE: Using Transformer-based Sequential Denoising Auto-Encoder for Unsupervised Sentence Embedding Learning</a>”. This benchmark (USEB) contains four heterogeous, task- and domain-specific datasets: <a href="https://github.com/taolei87/askubuntu">AskUbuntu</a>, <a href="https://github.com/D1Doris/CQADupStack">CQADupStack</a>, <a href="https://www.aclweb.org/anthology/D17-1126/">TwitterPara</a> and <a href="https://github.com/allenai/scidocs">SciDocs</a>. It directly works with <a href="https://github.com/UKPLab/sentence-transformers">SBERT</a>. For details, pleasae refer to the paper.</p>
+
+<h2 id="install">Install</h2>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">pip</span> <span class="n">install</span> <span class="n">useb</span>  <span class="c1"># Or git clone and pip install .
+</span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">useb</span><span class="p">.</span><span class="n">downloading</span> <span class="nb">all</span>  <span class="c1"># Download both training and evaluation data
+</span></code></pre></div></div>
+
+<h2 id="usage--example">Usage &amp; Example</h2>
+<p>After data downloading, one can either run (it needs ~8min on a GPU)</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> useb.examples.eval_sbert
+</code></pre></div></div>
+<p>to evaluate an <a href="https://github.com/UKPLab/sentence-transformers">SBERT</a> model (really an awesome repository for sentence embeddings, and the lastest model there is much better) on all the datasets; or run this same code below:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">useb</span> <span class="kn">import</span> <span class="n">run</span>
+<span class="kn">from</span> <span class="nn">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span>  <span class="c1"># SentenceTransformer is an awesome library for providing SOTA sentence embedding methods. TSDAE is also integrated into it.
+</span><span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="n">sbert</span> <span class="o">=</span> <span class="n">SentenceTransformer</span><span class="p">(</span><span class="s">'bert-base-nli-mean-tokens'</span><span class="p">)</span>  <span class="c1"># Build an SBERT model
+</span>
+<span class="c1"># The only thing needed for the evaluation: a function mapping a list of sentences into a batch of vectors (torch.Tensor)
+</span><span class="o">@</span><span class="n">torch</span><span class="p">.</span><span class="n">no_grad</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">semb_fn</span><span class="p">(</span><span class="n">sentences</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">sbert</span><span class="p">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span> <span class="n">show_progress_bar</span><span class="o">=</span><span class="bp">False</span><span class="p">))</span>
+
+<span class="n">results</span><span class="p">,</span> <span class="n">results_main_metric</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span>
+    <span class="n">semb_fn_askubuntu</span><span class="o">=</span><span class="n">semb_fn</span><span class="p">,</span> 
+    <span class="n">semb_fn_cqadupstack</span><span class="o">=</span><span class="n">semb_fn</span><span class="p">,</span>  
+    <span class="n">semb_fn_twitterpara</span><span class="o">=</span><span class="n">semb_fn</span><span class="p">,</span> 
+    <span class="n">semb_fn_scidocs</span><span class="o">=</span><span class="n">semb_fn</span><span class="p">,</span>
+    <span class="n">eval_type</span><span class="o">=</span><span class="s">'test'</span><span class="p">,</span>
+    <span class="n">data_eval_path</span><span class="o">=</span><span class="s">'data-eval'</span>  <span class="c1"># This should be the path to the folder of data-eval
+</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="nb">round</span><span class="p">(</span><span class="n">results_main_metric</span><span class="p">[</span><span class="s">'avg'</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">47.6</span>
+</code></pre></div></div>
+<p>It is also supported to evaluate on a single dataset (please see <a href="useb/examples/eval_sbert_askubuntu.py">useb/examples/eval_sbert_askubuntu.py</a>):</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python <span class="nt">-m</span> useb.examples.eval_sbert_askubuntu
+</code></pre></div></div>
+
+<h2 id="data-organization">Data Organization</h2>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">.</span>
+├── data-eval  <span class="c"># For evaluation usage. One can refer to ./unsupse_benchmark/evaluators to learn about how to loading these data.</span>
+│   ├── askubuntu
+│   │   ├── dev.txt
+│   │   ├── test.txt
+│   │   └── text_tokenized.txt
+│   ├── cqadupstack
+│   │   ├── corpus.json
+│   │   └── retrieval_split.json
+│   ├── scidocs
+│   │   ├── cite
+│   │   │   ├── test.qrel
+│   │   │   └── val.qrel
+│   │   ├── cocite
+│   │   │   ├── test.qrel
+│   │   │   └── val.qrel
+│   │   ├── coread
+│   │   │   ├── test.qrel
+│   │   │   └── val.qrel
+│   │   ├── coview
+│   │   │   ├── test.qrel
+│   │   │   └── val.qrel
+│   │   └── data.json
+│   └── twitterpara
+│       ├── Twitter_URL_Corpus_test.txt
+│       ├── test.data
+│       └── test.label
+├── data-train  <span class="c"># For training usage.</span>
+│   ├── askubuntu
+│   │   ├── supervised  <span class="c"># For supervised training. *.org and *.para are parallel files, each line are aligned and compose a gold relevant sentence pair (to work with MultipleNegativeRankingLoss in the SBERT repo).</span>
+│   │   │   ├── train.org
+│   │   │   └── train.para
+│   │   └── unsupervised  <span class="c"># For unsupervised training. Each line is a sentence.</span>
+│   │       └── train.txt
+│   ├── cqadupstack
+│   │   ├── supervised
+│   │   │   ├── train.org
+│   │   │   └── train.para
+│   │   └── unsupervised
+│   │       └── train.txt
+│   ├── scidocs
+│   │   ├── supervised
+│   │   │   ├── train.org
+│   │   │   └── train.para
+│   │   └── unsupervised
+│   │       └── train.txt
+│   └── twitter  <span class="c"># For supervised training on TwitterPara, the float labels are also available (to work with CosineSimilarityLoss in the SBERT repo). As reported in the paper, using the float labels can achieve higher performance.</span>
+│       ├── supervised
+│       │   ├── train.lbl
+│       │   ├── train.org
+│       │   ├── train.para
+│       │   ├── train.s1
+│       │   └── train.s2
+│       └── unsupervised
+│           └── train.txt
+└── tree.txt
+</code></pre></div></div>
+
+<h2 id="citation">Citation</h2>
+<p>If you use the code for evaluation, feel free to cite our publication <a href="https://arxiv.org/abs/2104.06979">TSDAE: Using Transformer-based Sequential Denoising Auto-Encoderfor Unsupervised Sentence Embedding Learning</a>:</p>
+<div class="language-bibtex highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">@article</span><span class="p">{</span><span class="nl">wang-2021-TSDAE</span><span class="p">,</span>
+    <span class="na">title</span> <span class="p">=</span> <span class="s">"TSDAE: Using Transformer-based Sequential Denoising Auto-Encoderfor Unsupervised Sentence Embedding Learning"</span><span class="p">,</span>
+    <span class="na">author</span> <span class="p">=</span> <span class="s">"Wang, Kexin and Reimers, Nils and  Gurevych, Iryna"</span><span class="p">,</span> 
+    <span class="na">journal</span><span class="p">=</span> <span class="s">"arXiv preprint arXiv:2104.06979"</span><span class="p">,</span>
+    <span class="na">month</span> <span class="p">=</span> <span class="s">"4"</span><span class="p">,</span>
+    <span class="na">year</span> <span class="p">=</span> <span class="s">"2021"</span><span class="p">,</span>
+    <span class="na">url</span> <span class="p">=</span> <span class="s">"https://arxiv.org/abs/2104.06979"</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div></div>
+:ET
