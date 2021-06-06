@@ -3,15 +3,15 @@
   <ul class="nav_list">
     {% if site.user.aboutme %}
     <li class="nav_item">
-      <a href="{{ site.baseurl }}/aboutme.html">about</a>
+      <a href="{{ site.baseurl }}/aboutme.html">CV</a>
     </li>
 
     {% endif %}
     {% for category in site.categories %}
-    {% capture cat_name %}{{ category | first }}{% endcapture %}
+    {% capture cat_name %}{{ category | first | downcase }}{% endcapture %}
 
     <li class="nav_item">
-      <a href="{{ site.baseurl }}/categories/{{ cat_name }}" id="aa">{{ cat_name }} ({{ category | last | size }})</a>
+      <a href="{{ site.baseurl }}/categories/{{ cat_name }}" id="aa">{{ cat_name | capitalize }} ({{ category | last | size }})</a>
     </li>
     {% endfor %}
   </ul>
