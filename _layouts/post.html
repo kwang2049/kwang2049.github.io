@@ -28,7 +28,13 @@ layout: page
   {% if page.comment %}
   <div class="post_comment">
 
-    {% include disqus.html username = site.disqus.shortname %}
+    <script src="https://utteranc.es/client.js"
+        repo="kwang2049/kwang2049.github.io"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+    </script>
 
   </div>
   {% endif %}
